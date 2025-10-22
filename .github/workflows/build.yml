@@ -7,16 +7,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-        
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -26,40 +26,41 @@ jobs:
           git \
           unzip \
           zip \
+          wget \
           libncurses6 \
           libstdc++6 \
           build-essential \
           libssl-dev \
           libffi-dev \
-          python3-dev \
-          wget
-        
+          python3-dev
+
     - name: Install Buildozer
       run: |
-        pip install buildozer
-        pip install cython==0.29.33
-        
-    - name: Force accept Android licenses
+        pip install --upgrade pip
+        pip install buildozer cython==0.29.33
+
+    - name: Install Android SDK (manually)
       run: |
-        mkdir -p ~/.android/licenses
-        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > ~/.android/licenses/android-sdk-license
-        echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> ~/.android/licenses/android-sdk-license
-        echo "84831b9409646a918e30573bab4c9c91346d8abd" >> ~/.android/licenses/android-sdk-license
-        echo "601085b94cd77f0b54ff86406957099ebe79c4d6" >> ~/.android/licenses/android-sdk-license
-        echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" >> ~/.android/licenses/android-sdk-license
-        echo "e9aaba70f0e0aa6e48d10da3f4b5b6d807e5f1d1" >> ~/.android/licenses/android-sdk-license
-        
-    - name: Build APK with forced licenses
+        mkdir -p ~/.buildozer/android/platform
+        cd ~/.buildozer/android/platform
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O sdk-tools.zip
+        unzip sdk-tools.zip -d android-sdk
+        mkdir -p android-sdk/cmdline-tools/latest
+        mv android-sdk/cmdline-tools/* android-sdk/cmdline-tools/latest/ || true
+
+        yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
+          "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+        yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$HOME/.buildozer/android/platform/android-sdk
+
+    - name: Build APK
       run: |
-        # Примусово приймаємо ліцензії для buildozer
-        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-        echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-        echo "84831b9409646a918e30573bab4c9c91346d8abd" >> ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-        
+        export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
+        export ANDROIDNDK="$ANDROIDSDK/ndk-bundle"
+        export PATH="$ANDROIDSDK/platform-tools:$PATH"
         buildozer -v android debug
         ls -la bin/
-        
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
