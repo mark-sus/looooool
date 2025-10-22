@@ -28,8 +28,12 @@ jobs:
           git \
           unzip \
           zip \
-          libncurses5 \
-          libstdc++6
+          libncurses6 \
+          libstdc++6 \
+          build-essential \
+          libssl-dev \
+          libffi-dev \
+          python3-dev
         
     - name: Install Buildozer
       run: |
