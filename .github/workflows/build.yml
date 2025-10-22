@@ -3,12 +3,10 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - name: Checkout code
@@ -19,28 +17,20 @@ jobs:
       with:
         python-version: '3.9'
         
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          python3-pip \
-          openjdk-11-jdk \
-          git \
-          unzip \
-          zip \
-          libncurses6 \
-          libstdc++6 \
-          build-essential \
-          libssl-dev \
-          libffi-dev \
-          python3-dev
-        
-    - name: Install Buildozer
+    - name: Install Buildozer and dependencies
       run: |
         pip install buildozer
         pip install cython==0.29.33
         
-    - name: Build APK
+    - name: Accept Android licenses
+      run: |
+        mkdir -p ~/.android
+        echo "### Android Licenses ###" > ~/.android/licenses/android-sdk-license
+        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" >> ~/.android/licenses/android-sdk-license
+        echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> ~/.android/licenses/android-sdk-license
+        echo "84831b9409646a918e30573bab4c9c91346d8abd" >> ~/.android/licenses/android-sdk-license
+        
+    - name: Build APK with Buildozer
       run: |
         buildozer -v android debug
         ls -la bin/
