@@ -1,0 +1,49 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          python3-pip \
+          openjdk-11-jdk \
+          git \
+          unzip \
+          zip \
+          libncurses5 \
+          libstdc++6
+        
+    - name: Install Buildozer
+      run: |
+        pip install buildozer
+        pip install cython==0.29.33
+        
+    - name: Build APK
+      run: |
+        buildozer -v android debug
+        ls -la bin/
+        
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: video-downloader-apk
+        path: bin/*.apk
+        retention-days: 30
